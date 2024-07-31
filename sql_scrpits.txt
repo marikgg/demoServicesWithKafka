@@ -1,0 +1,248 @@
+create or replace view pdd_all_objects as
+select
+    nsp.nspname as schema_name,
+       case pc.relkind
+           when 'r' then 'table'
+           when 'v' then 'view'
+           when 'c' then 'type'
+           when 'i' then 'index'
+           when 'S' then 'sequence'
+           else 'unsupported'
+           end                 as object_type,
+    pc.relname as object_name,
+    obj_description(pc.oid) as comment
+from pg_catalog.pg_class pc
+         LEFT JOIN pg_catalog.pg_namespace nsp ON nsp.oid = pc.relnamespace;
+
+COMMENT ON VIEW pdd_all_objects is 'Метаинформация всех объектов в базе';
+COMMENT ON COLUMN pdd_all_objects.schema_name IS 'Наименование схемы';
+COMMENT ON COLUMN pdd_all_objects.object_type IS 'Тип объекта';
+COMMENT ON COLUMN pdd_all_objects.comment IS 'Комментарий';
+COMMENT ON COLUMN pdd_all_objects.object_name IS 'Наименование объекта';
+
+
+
+create or replace view pdd_views as
+SELECT table_schema AS schema_name,
+       table_name as view_name,
+       check_option,
+       is_updatable,
+       is_insertable_into,
+       is_trigger_updatable,
+       is_trigger_deletable,
+       is_trigger_insertable_into,
+       view_definition
+FROM information_schema.views
+ORDER BY schema_name,
+         view_name;
+
+
+comment on view pdd_views is 'Метаинформация представления в базе данных';
+comment on column pdd_views.schema_name is 'Наименование схемы представления';
+comment on column pdd_views.view_name is 'Наименование представления';
+comment on column pdd_views.check_option is 'Проверка данных, которая может быть CASCADED или LOCAL, если представление является обновляемым';
+comment on column pdd_views.is_updatable is 'Указывает, можно ли обновлять представление (YES или NO)';
+comment on column pdd_views.is_insertable_into is 'Указывает, можно ли вставлять данные в представление (YES или NO)';
+comment on column pdd_views.is_trigger_updatable is 'Указывает, поддерживается ли обновление представления с использованием триггеров (YES или NO)';
+comment on column pdd_views.is_trigger_deletable is 'Указывает, поддерживается ли удаление данных из представления с использованием триггеров (YES или NO)';
+comment on column pdd_views.is_trigger_insertable_into is 'Указывает, поддерживается ли вставка данных в представление с использованием триггеров (YES или NO)';
+comment on column pdd_views.view_definition is 'SQL-запрос, определяющий представление';
+
+
+create or replace view pdd_columns as
+SELECT cols.table_schema AS schema_name,
+       cols.table_name,
+       cols.column_name,
+       cols.ordinal_position,
+       cols.column_default,
+       cols.is_nullable,
+       cols.data_type,
+       cols.character_maximum_length,
+       cols.numeric_precision,
+       cols.numeric_precision_radix,
+       cols.numeric_scale,
+       cols.datetime_precision,
+       cols.interval_type,
+       cols.interval_precision,
+       cols.is_self_referencing,
+       cols.is_identity,
+       cols.identity_generation,
+       cols.identity_start,
+       cols.identity_increment,
+       cols.identity_maximum,
+       cols.identity_minimum,
+       cols.identity_cycle,
+       cols.is_generated,
+       cols.generation_expression,
+       pgd.description AS column_comment
+FROM information_schema.columns AS cols
+         LEFT JOIN
+     pg_catalog.pg_statio_all_tables AS st
+     ON st.schemaname = cols.table_schema
+         AND st.relname = cols.table_name
+         LEFT JOIN
+     pg_catalog.pg_description AS pgd
+     ON pgd.objoid = st.relid
+         AND pgd.objsubid = cols.ordinal_position
+ORDER BY cols.table_schema,
+         cols.table_name,
+         cols.ordinal_position;
+
+
+COMMENT ON VIEW pdd_columns IS 'Метаинформация колонок таблиц базы';
+COMMENT ON COLUMN pdd_columns.schema_name IS 'Наименование схемы таблицы';
+COMMENT ON COLUMN pdd_columns.table_name IS 'Имя таблицы';
+COMMENT ON COLUMN pdd_columns.column_name IS 'Имя колонки';
+COMMENT ON COLUMN pdd_columns.ordinal_position IS 'Позиция колонки в таблице';
+COMMENT ON COLUMN pdd_columns.column_default IS 'Значение по умолчанию для колонки';
+COMMENT ON COLUMN pdd_columns.is_nullable IS 'Указывает, может ли колонка содержать NULL значения';
+COMMENT ON COLUMN pdd_columns.data_type IS 'Тип данных колонки';
+COMMENT ON COLUMN pdd_columns.character_maximum_length IS 'Максимальная длина для символьных типов данных';
+COMMENT ON COLUMN pdd_columns.numeric_precision IS 'Точность для числовых типов данных';
+COMMENT ON COLUMN pdd_columns.numeric_precision_radix IS 'Основание точности для числовых типов данных';
+COMMENT ON COLUMN pdd_columns.numeric_scale IS 'Масштаб для числовых типов данных';
+COMMENT ON COLUMN pdd_columns.datetime_precision IS 'Точность для типов данных даты и времени';
+COMMENT ON COLUMN pdd_columns.interval_type IS 'Тип интервала';
+COMMENT ON COLUMN pdd_columns.interval_precision IS 'Точность интервала';
+COMMENT ON COLUMN pdd_columns.is_self_referencing IS 'Указывает, является ли колонка самоссылочной';
+COMMENT ON COLUMN pdd_columns.is_identity IS 'Указывает, является ли колонка идентификационной';
+COMMENT ON COLUMN pdd_columns.identity_generation IS 'Тип генерации идентификатора';
+COMMENT ON COLUMN pdd_columns.identity_start IS 'Начальное значение идентификатора';
+COMMENT ON COLUMN pdd_columns.identity_increment IS 'Инкремент значения идентификатора';
+COMMENT ON COLUMN pdd_columns.identity_maximum IS 'Максимальное значение идентификатора';
+COMMENT ON COLUMN pdd_columns.identity_minimum IS 'Минимальное значение идентификатора';
+COMMENT ON COLUMN pdd_columns.identity_cycle IS 'Опция цикличности идентификатора';
+COMMENT ON COLUMN pdd_columns.is_generated IS 'Указывает, является ли колонка сгенерированной';
+COMMENT ON COLUMN pdd_columns.generation_expression IS 'Выражение, используемое для генерации значения колонки';
+COMMENT ON COLUMN pdd_columns.column_comment IS 'Комментарий к колонке';
+
+
+
+
+create or replace view pdd_indexes as
+select pgi.schemaname as schema_name,
+       pgi.tablename as table_name,
+       pgi.indexname as index_name,
+       pgi.indexdef as index_definition
+from pg_indexes pgi;
+
+select * from pg_indexes;
+
+select * from pg_index;
+
+COMMENT ON VIEW pdd_indexes IS 'Метаинформация индексов базы';
+COMMENT ON COLUMN pdd_indexes.schema_name is 'Название схемы таблиц';
+COMMENT ON COLUMN pdd_indexes.table_name is 'Название таблицы на которую сформирован индекс';
+COMMENT ON COLUMN pdd_indexes.index_name is 'Название индекса';
+COMMENT ON COLUMN pdd_indexes.index_definition is 'DDL индекса';
+
+
+create or replace view pdd_indexes_columns as
+SELECT ns.nspname AS schema_name,
+       idx.relname AS index_name,
+       att.attname AS column_name,
+       (CASE
+            WHEN i.indisprimary THEN 'Primary Key'
+            WHEN i.indisunique THEN 'Unique'
+            ELSE 'Index'
+           END)                             AS index_type,
+       array_position(i.indkey, att.attnum) AS column_position
+FROM pg_class idx
+         JOIN pg_index i ON idx.oid = i.indexrelid
+         JOIN pg_class tbl ON i.indrelid = tbl.oid
+         JOIN pg_namespace ns ON ns.oid = tbl.relnamespace
+         JOIN pg_attribute att ON att.attrelid = tbl.oid
+WHERE idx.relkind = 'i' -- только индексы
+  AND att.attnum = ANY (i.indkey)
+ORDER BY ns.nspname,
+         idx.relname,
+         array_position(i.indkey, att.attnum);
+
+
+CREATE TABLE all_data_types
+(
+    -- Числовые типы данных
+    serial_col        SERIAL PRIMARY KEY,
+    smallint_col      SMALLINT,
+    integer_col       INTEGER,
+    bigint_col        BIGINT,
+    decimal_col       DECIMAL(10, 2),
+    numeric_col       NUMERIC(10, 2),
+    real_col          REAL,
+    double_col        DOUBLE PRECISION,
+
+    -- Символьные типы данных
+    char_col          CHAR(10),
+    varchar_col       VARCHAR(255),
+    text_col          TEXT,
+
+    -- Типы данных даты и времени
+    date_col          DATE,
+    time_col          TIME,
+    timetz_col        TIME WITH TIME ZONE,
+    timestamp_col     TIMESTAMP,
+    timestamptz_col   TIMESTAMP WITH TIME ZONE,
+    interval_col      INTERVAL,
+
+    -- Булевый тип данных
+    boolean_col       BOOLEAN,
+
+    -- Типы данных для UUID и массивов
+    uuid_col          UUID,
+    array_col         INTEGER[],
+
+    -- Типы данных для JSON
+    json_col          JSON,
+    jsonb_col         JSONB,
+
+    -- Геометрические типы данных
+    point_col         POINT,
+    line_col          LINE,
+    lseg_col          LSEG,
+    box_col           BOX,
+    path_col          PATH,
+    polygon_col       POLYGON,
+    circle_col        CIRCLE,
+
+    -- Типы данных для XML
+    xml_col           XML,
+
+    -- Типы данных для битов
+    bit_col           BIT(3),
+    bit_varying_col   BIT VARYING(5),
+
+    -- Типы данных для монет
+    money_col         MONEY,
+
+    -- Типы данных для диапазонов
+    int4range_col     INT4RANGE,
+    int8range_col     INT8RANGE,
+    numrange_col      NUMRANGE,
+    tsrange_col       TSRANGE,
+    tstzrange_col     TSTZRANGE,
+    daterange_col     DATERANGE,
+
+    -- Другие типы данных
+    cidr_col          CIDR,
+    inet_col          INET,
+    macaddr_col       MACADDR,
+    macaddr8_col      MACADDR8,
+    txid_snapshot_col TXID_SNAPSHOT,
+    pg_lsn_col        PG_LSN,
+
+    -- Типы данных для идентификаторов объектов
+    oid_col           OID,
+    xid_col           XID,
+    cid_col           CID
+);
+
+create table test_table
+(
+  id varchar(255) not null,
+  main_class varchar(255) not null,
+  type varchar(255) not null,
+  node_type varchar(256) generated always as ('flink_srv') stored,
+
+  constraint dict_service_pk primary key (id),
+  constraint dict_service_uk unique (main_class, type)
+)
