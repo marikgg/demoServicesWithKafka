@@ -1,0 +1,100 @@
+create or replace view pdd_funcs as
+SELECT
+    routine_schema AS schema_name,
+    routine_name AS func_name,
+    routine_type AS func_type,
+    data_type AS return_value_type,
+    specific_name,
+    routine_definition AS func_def,
+    external_language AS func_language,
+    parameter_style,
+    is_deterministic,
+    sql_data_access,
+    is_null_call,
+    security_type,
+    routine_body,
+    created AS created_date,
+    last_altered
+FROM
+    information_schema.routines
+ORDER BY
+    routine_schema,
+    routine_name
+/
+comment on view pdd_funcs is 'Метаинформация функций и процедур в базе данных'
+/
+comment on column pdd_funcs.schema_name is 'Наименование схемы представления'
+/
+comment on column pdd_funcs.func_name is 'Наименование функции/процедуры'
+/
+comment on column pdd_funcs.func_type is 'Тип (FUNCTION или PROCEDURE)'
+/
+comment on column pdd_funcs.return_value_type is 'Тип данных, возвращаемых функцией'
+/
+comment on column pdd_funcs.specific_name is 'Уникальное имя функции в пределах схемы'
+/
+comment on column pdd_funcs.func_def is 'SQL-определение функции'
+/
+comment on column pdd_funcs.func_language is 'Язык, на котором написана функция (например, SQL, plpgsql)'
+/
+comment on column pdd_funcs.parameter_style is 'Стиль передачи параметров функции'
+/
+comment on column pdd_funcs.is_deterministic is 'Указывает, является ли функция детерминированной (YES или NO)'
+/
+comment on column pdd_funcs.sql_data_access is 'Указывает, как функция взаимодействует с SQL данными (например, CONTAINS SQL, READS SQL DATA)'
+/
+comment on column pdd_funcs.is_null_call is 'Указывает, может ли функция вызываться с NULL значениями параметров (YES или NO)'
+/
+comment on column pdd_funcs.security_type is 'Указывает уровень безопасности функции (например, DEFINER, INVOKER)'
+/
+comment on column pdd_funcs.routine_body is 'Тело функции (например, INLINE, EXTERNAL)'
+/
+comment on column pdd_funcs.created_date is 'Дата создания функции'
+/
+comment on column pdd_funcs.last_altered is 'Дата последнего изменения функции'
+
+
+
+
+
+create or replace view pdd_constraints as
+SELECT
+    tc.constraint_schema AS schema_name,
+    tc.constraint_name AS constraint_name,
+    tc.table_name AS table_name,
+    tc.constraint_type AS constraint_type,
+    kcu.column_name AS column_name,
+    ccu.table_schema AS parent_schema_name,
+    ccu.table_name AS parent_table_name,
+    ccu.column_name AS parent_column_name
+FROM
+    information_schema.table_constraints AS tc
+LEFT JOIN
+    information_schema.key_column_usage AS kcu
+    ON tc.constraint_name = kcu.constraint_name
+    AND tc.table_schema = kcu.table_schema
+LEFT JOIN
+    information_schema.constraint_column_usage AS ccu
+    ON ccu.constraint_name = tc.constraint_name
+    AND ccu.table_schema = tc.table_schema
+ORDER BY
+    schema_name,
+    constraint_name
+/
+comment on view pdd_constraints is 'Метаинформация ограничений (constraint) в БД'
+/
+comment on column pdd_constraints.schema_name is 'Наименование схемы, в которой находится ограничение'
+/
+comment on column pdd_constraints.constraint_name is 'Наименование ограничения'
+/
+comment on column pdd_constraints.table_name is 'Наименование схемы, в которой находится ограничение'
+/
+comment on column pdd_constraints.constraint_type is 'Тип ограничения (PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK, EXCLUDE)'
+/
+comment on column pdd_constraints.column_name is 'Наименование колонки, на которую применено ограничение'
+/
+comment on column pdd_constraints.parent_schema_name is 'Наименование схемы родительской таблицы (для внешних ключей)'
+/
+comment on column pdd_constraints.parent_table_name is 'Наименование родительской таблицы (для внешних ключей)'
+/
+comment on column pdd_constraints.parent_column_name is 'Наименование колонки родительской таблицы (для внешних ключей)'
